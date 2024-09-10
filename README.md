@@ -40,6 +40,29 @@ Hi, this is my Ethereum Deposit Tracker. The project uses Alchemy (Ethereum node
 - **Winston**: Logging module for tracking events and errors.
 - **Telegram**: Sends real-time alerts for new deposits.
 
+## Public Key Recovery
+
+The **public key recovery** function allows the retrieval of a sender’s public key from a given Ethereum transaction. By fetching the transaction details using Alchemy and utilizing the transaction's signature (`r`, `s`, and `v` components), the public key can be recovered through cryptographic methods. This process ensures the authenticity and identity of the sender.
+
+Here’s how it works:
+1. The function fetches the transaction data via `alchemy.core.getTransaction()`.
+2. It then extracts the `r`, `s`, `v`, and `data` fields from the transaction.
+3. The data and signature components are converted to a hash using `keccak256`.
+4. Using the signature and message hash, the public key is recovered via `ecrecover`.
+5. The recovered public key is returned and can be used for verification purposes.
+
+## Gas Fee Calculation
+
+The **gas fee calculation** feature calculates the total gas fee incurred during a transaction by fetching transaction details and using the gas price and gas used values. The gas fee is important to monitor as it represents the cost paid by the user to execute a transaction on the Ethereum network.
+
+Here’s the calculation process:
+1. Fetch the transaction details using `alchemy.core.getTransaction()` and the transaction receipt using `alchemy.core.getTransactionReceipt()`.
+2. Extract the `gasPrice` and `gasUsed` values from the transaction and receipt.
+3. Convert these values from hexadecimal to decimal using `BigNumber`.
+4. Multiply the `gasPrice` by the `gasUsed` to get the total fee in Wei.
+5. Convert the total fee from Wei to Ether for readability.
+6. Output the total gas fee in Ether for the user, along with additional details like the timestamp and the recovered public key.
+
 ## Configuration
 
 Create a `.env` file for **eth-deposit-tracker-core** with the following variables:
