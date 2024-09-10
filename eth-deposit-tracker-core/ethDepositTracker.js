@@ -3,7 +3,10 @@ const {
   getDepositLogs,
   getTransactionDetails,
   getBlockTimestamp,
+  recoverPublicKey,
+  getTransactionDetailss
 } = require("./ethDepositFetcher");
+const BigNumber = require('bignumber.js');
 const TelegramBot = require("node-telegram-bot-api");
 const logger = require("./logger");
 require("dotenv").config();
@@ -89,15 +92,28 @@ async function trackDeposits() {
         // Extract necessary details
         const txHash = log.transactionHash;
         const receipt = await getTransactionDetails(txHash);
+
+        const receipt2 = await getTransactionDetailss(txHash);
+        const gasPriceHex = receipt.gasPrice._hex;
+        const cumulativeGasUsedHex = receipt2.gasUsed._hex;
+
+        const gasPrice = new BigNumber(gasPriceHex, 16);
+        const cumulativeGasUsed = new BigNumber(cumulativeGasUsedHex, 16);
+        // Calculate total fee in wei
+        const totalFeeWei = gasPrice.multipliedBy(cumulativeGasUsed);
+        const weiToEther = new BigNumber("1000000000000000000");
+        const totalFeeEther = totalFeeWei.div(weiToEther);
+        const totalFeeEtherStr = totalFeeEther.toString();
         const timestamp = await getBlockTimestamp(receipt.blockNumber);
+        const publicKey = await recoverPublicKey(txHash);
 
         // Extract deposit details as per your requirement
         const depositDetails = {
           blockNumber: receipt.blockNumber,
           blockTimestamp: new Date(timestamp * 1000).toISOString(),
-          fee: receipt.gasUsed ? receipt.gasUsed.toString() : "0", // Convert gas used to fee (as a placeholder)
+          fee: totalFeeEtherStr, // Convert gas used to fee (as a placeholder)
           hash: txHash,
-          pubkey: log.address, // Replace with the correct field if needed (log.address might not be pubkey)
+          pubkey: publicKey || log.address, // Replace with the correct field if needed (log.address might not be pubkey)
         };
         await storeDepositDetails(depositDetails);
 
